@@ -1,0 +1,43 @@
+version: '3.7'
+services:
+  
+  postgres-db:
+    image: postgres:12.3-alpine
+    #container_name: 'db'
+    restart: always
+    volumes:
+      - backend_volume:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: "gpql"
+      POSTGRES_PASSWORD: "12345"
+    ports:
+      - 5456:5432
+    networks:
+      - backend_network
+  backend:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    command: python app/main.py
+    tty: true
+    restart: always
+    volumes:
+      - ./backend:/app/:cached
+      - ./.docker/.ipython:/root/.ipython:cached
+    environment:
+      PYTHONPATH: .
+    depends_on:
+      - postgres-db
+    networks:
+      - backend_network
+    ports:
+      - 8802:8802
+    env_file:
+      - .env
+
+volumes:
+  backend_volume:
+
+networks:
+  backend_network:
+    driver: bridge
